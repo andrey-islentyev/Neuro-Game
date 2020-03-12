@@ -7,6 +7,8 @@
 #include <ctime>
 #include <random>
 #include <cmath>
+#include <set>
+#include <map>
 
 void pause() {
 	std::cout.flush();
@@ -19,9 +21,15 @@ const int width = 1000;
 const int height = 500;
 const int maxPlayerCount = 7;
 
+bool comp(const std::pair<int, sf::Sprite>& lhs, const std::pair<int, sf::Sprite>& rhs) {
+	return lhs.first < rhs.first;
+}
+
 int main() {
+	std::set<std::pair<int, sf::Sprite>, bool(*)(const std::pair<int, sf::Sprite>& lhs, const std::pair<int, sf::Sprite>& rhs)> entity(comp);
+	std::map<int, sf::Sprite> idTable;
 	uint16_t port = 5757;
-	std::string ip = "127.0.0.1";
+	std::string ipString = "127.0.0.1";
 	sf::Sprite** textures;
 	sf::Texture texture;
 	sf::Color revealed;
@@ -35,7 +43,8 @@ int main() {
 	std::string nickname;
 	std::getline(std::cin, nickname);
 	std::cout << "ip: ";
-	std::getline(std::cin, ip);
+	std::getline(std::cin, ipString);
+	sf::IpAddress ip = ipString;
 	std::cout << "port: ";
 	std::cin >> port;
 	sf::TcpSocket socket;
@@ -78,6 +87,7 @@ int main() {
 			textures[i][j].setScale(sf::Vector2f(2, 2));
 		}
 	}
+	udpSocket.setBlocking(true);
 	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event)) {
@@ -85,7 +95,23 @@ int main() {
 				window.close();
 		}
 		window.clear();
-		window.draw(textures[4][1]);
+		sf::Packet* pac = new sf::Packet();
+		while (udpSocket.receive(*pac, ip, serverPort) == sf::Socket::Done) {
+			int type, id, playerType, fruit, x, y;
+			*pac >> type;
+			if (type == 1) {
+				*pac >> id >> playerType >> fruit >> x >> y;
+				if (entity.size() > 0 && entity.find({ id, idTable[id] }) != entity.end()) 
+					entity.erase({ id, idTable[id] });
+				sf::Sprite s = textures[playerType][fruit];
+				s.setPosition(sf::Vector2f(x, y));
+				entity.insert({ id, s });
+				idTable[id] = s;
+			}
+		}
+		delete pac;
+		for (auto now : entity)
+			window.draw(now.second);
 		window.display();
 	}
 	return 0;
