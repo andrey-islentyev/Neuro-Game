@@ -68,7 +68,7 @@ int main() {
 	window.setVerticalSyncEnabled(true);
 	revealed = sf::Color(47, 129, 54);
 	unrevealed = sf::Color(39, 109, 45);
-	texture.loadFromFile("plants.png");
+	texture.loadFromFile("res/plants.png");
 	textures = new sf::Sprite*[7];
 	for (int i = 0; i < 7; i++) {
 		textures[i] = new sf::Sprite[3];
