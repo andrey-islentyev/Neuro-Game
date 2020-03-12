@@ -1,12 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
-#include <stdio.h>
-#include <assert.h>
+#include <string>
+#include <sstream>
 #include <iostream>
-#include <ctime>
-#include <random>
-#include <cmath>
 #include <set>
 #include <map>
 
@@ -87,7 +84,7 @@ int main() {
 			textures[i][j].setScale(sf::Vector2f(2, 2));
 		}
 	}
-	udpSocket.setBlocking(true);
+	udpSocket.setBlocking(false);
 	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event)) {
@@ -98,9 +95,13 @@ int main() {
 		sf::Packet* pac = new sf::Packet();
 		while (udpSocket.receive(*pac, ip, serverPort) == sf::Socket::Done) {
 			int type, id, playerType, fruit, x, y;
-			*pac >> type;
+			std::string msg;
+			*pac >> msg;
+			std::stringstream stream;
+			stream << msg;
+			stream >> type;
 			if (type == 1) {
-				*pac >> id >> playerType >> fruit >> x >> y;
+				stream >> id >> playerType >> fruit >> x >> y;
 				if (entity.size() > 0 && entity.find({ id, idTable[id] }) != entity.end()) 
 					entity.erase({ id, idTable[id] });
 				sf::Sprite s = textures[playerType][fruit];
