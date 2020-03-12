@@ -18,36 +18,18 @@ void pause() {
 const int width = 1000;
 const int height = 500;
 const int maxPlayerCount = 7;
-uint16_t port = 5757;
-std::string ip = "127.0.0.1";
-
-sf::Sprite** textures;
-sf::Texture texture;
-sf::UdpSocket socket;
-sf::Color revealed;
-sf::Color unrevealed;
-sf::UdpSocket udpSocket;
-sf::Packet packet;
-sf::Uint16 serverPort;
-sf::Uint16 clientPort;
-
-void initialize() {
-	revealed = sf::Color(47, 129, 54);
-	unrevealed = sf::Color(39, 109, 45);
-	texture.loadFromFile("plants.png");
-	if (socket.bind(5757) != sf::Socket::Done) {}
-	textures = new sf::Sprite*[7];
-	for (int i = 0; i < 7; i++) {
-		textures[i] = new sf::Sprite[3];
-		for (int j = 0; j < 3; j++) {
-			textures[i][j].setTexture(texture, true);
-			textures[i][j].setTextureRect(sf::IntRect(i * 32, (j + 2) * 64, 32, 64));
-			textures[i][j].setScale(sf::Vector2f(2, 2));
-		}
-	}
-}
 
 int main() {
+	uint16_t port = 5757;
+	std::string ip = "127.0.0.1";
+	sf::Sprite** textures;
+	sf::Texture texture;
+	sf::Color revealed;
+	sf::Color unrevealed;
+	sf::UdpSocket udpSocket;
+	sf::Packet packet;
+	sf::Uint16 serverPort;
+	sf::Uint16 clientPort;
 	setlocale(LC_ALL, "Russian");
 	std::cout << "Nickname: ";
 	std::string nickname;
@@ -84,7 +66,18 @@ int main() {
 	socket.send(packet);
 	sf::RenderWindow window(sf::VideoMode(width, height), L"Client");
 	window.setVerticalSyncEnabled(true);
-	initialize();
+	revealed = sf::Color(47, 129, 54);
+	unrevealed = sf::Color(39, 109, 45);
+	texture.loadFromFile("plants.png");
+	textures = new sf::Sprite*[7];
+	for (int i = 0; i < 7; i++) {
+		textures[i] = new sf::Sprite[3];
+		for (int j = 0; j < 3; j++) {
+			textures[i][j].setTexture(texture, true);
+			textures[i][j].setTextureRect(sf::IntRect(i * 32, (j + 2) * 64, 32, 64));
+			textures[i][j].setScale(sf::Vector2f(2, 2));
+		}
+	}
 	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event)) {
