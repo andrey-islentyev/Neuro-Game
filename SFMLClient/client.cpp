@@ -74,7 +74,7 @@ int main() {
 	window.setVerticalSyncEnabled(true);
 	revealed = sf::Color(47, 129, 54);
 	unrevealed = sf::Color(39, 109, 45);
-	texture.loadFromFile("res/plants.png");
+	texture.loadFromFile("./res/plants.png");
 	textures = new sf::Sprite*[7];
 	for (int i = 0; i < 7; i++) {
 		textures[i] = new sf::Sprite[3];
@@ -104,10 +104,12 @@ int main() {
 				stream >> id >> playerType >> fruit >> x >> y;
 				if (entity.size() > 0 && entity.find({ id, idTable[id] }) != entity.end()) 
 					entity.erase({ id, idTable[id] });
-				sf::Sprite s = textures[playerType][fruit];
-				s.setPosition(sf::Vector2f(x, y));
-				entity.insert({ id, s });
-				idTable[id] = s;
+				if (fruit != -1) {
+					sf::Sprite s = textures[playerType][fruit];
+					s.setPosition(sf::Vector2f(x, y));
+					entity.insert({ id, s });
+					idTable[id] = s;
+				}
 			}
 		}
 		delete pac;
