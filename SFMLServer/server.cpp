@@ -1,6 +1,7 @@
 #include <SFML/Network.hpp>
 #include <iostream>
 #include <vector>
+#include <string>
 #include <SFML/System.hpp>
 
 #define GAME_START_TIME 20.0
@@ -25,6 +26,7 @@ struct PlayerInfo {
 	sf::Thread playerThread;
 	sf::Uint16 udpPort;
 	std::string nickname;
+	sf::IpAddress ipAddress;
 	PlayerInfo() : playerThread(mainThread, this) {}
 };
 
@@ -56,6 +58,7 @@ int main() {
 		}
 		if (listener.accept(playersInfo[currentSlot].authSocket) == sf::Socket::Done) {
 			std::cout << "Player with id #" << currentSlot << " connected\n";
+			playersInfo[currentSlot].ipAddress = playersInfo[currentSlot].authSocket.getRemoteAddress();
 			currentSlot++;
 			if (currentSlot >= 2) {
 				clock.restart();
@@ -63,8 +66,15 @@ int main() {
 		}
 		if (timeLeft != prevSec) {
 			prevSec = timeLeft;
-			if ((prevSec % 60 == 0 || prevSec == 20 || prevSec == 30 || prevSec == 10 || prevSec <= 5) && currentSlot >= 2)
-				std::cout << timeLeft << " seconds left" << std::endl;
+			if (currentSlot >= 2) {
+				if (prevSec >= 60) {
+					int minutes = prevSec / 60;
+					int seconds = prevSec % 60;
+					std::cout << minutes << " m " << seconds << "s" << "\n";
+				}
+				if ((prevSec % 60 == 0 || prevSec == 20 || prevSec == 30 || prevSec == 10 || prevSec <= 5) )
+					std::cout << timeLeft << " s left" << std::endl;
+			}
 		}
 	}
 	std::cout << "Game started\n";
@@ -95,6 +105,21 @@ int main() {
 	}
 	for (size_t i = 0; i < currentSlot; ++i) {
 		std::cout << "#" << i << " nickname: " << playersInfo[i].nickname << "\n";
+	}
+	while(true){
+		std::cout << "Enter id: ";
+		size_t id;
+		std::cin >> id;
+		if(id >= currentSlot){
+			std::cout << "Index out of bounds\n";
+			continue;
+		}
+		std::string command;
+		std::cout << "Enter cmd: ";
+		std::getline(std::cin.ignore(), command);
+		sf::Packet packet;
+		packet << command;
+		playersInfo[id].udpSocket.send(packet, playersInfo[id].ipAddress, playersInfo[id].udpPort);
 	}
 	pause();
 }

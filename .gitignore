@@ -261,5 +261,5 @@ __pycache__/
 *.pyc
 
 # Linux binaries
-LinuxBuild/client
-LinuxBuild/server
+SFMLServer/server
+SFMLClient/client
