@@ -1,8 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
-#include <string>
-#include <sstream>
 #include <iostream>
 #include <set>
 #include <map>
@@ -94,18 +92,17 @@ int main() {
 		window.clear();
 		sf::Packet* pac = new sf::Packet();
 		while (udpSocket.receive(*pac, ip, serverPort) == sf::Socket::Done) {
-			int type, id, playerType, fruit, x, y;
-			std::string msg;
-			*pac >> msg;
-			std::stringstream stream;
-			stream << msg;
-			stream >> type;
+			sf::Uint8 type, species;
+			sf::Int8 fruit;
+			sf::Uint64 id;
+			double x, y;
+			*pac >> type;
 			if (type == 1) {
-				stream >> id >> playerType >> fruit >> x >> y;
+				*pac >> id >> species >> fruit >> x >> y;
 				if (entity.size() > 0 && entity.find({ id, idTable[id] }) != entity.end()) 
 					entity.erase({ id, idTable[id] });
 				if (fruit != -1) {
-					sf::Sprite s = textures[playerType][fruit];
+					sf::Sprite s = textures[species][fruit];
 					s.setPosition(sf::Vector2f(x, y));
 					entity.insert({ id, s });
 					idTable[id] = s;
