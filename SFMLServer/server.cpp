@@ -212,18 +212,17 @@ int main() {
     while (true) {
         phaseClock.restart();
         //recieve packets stage
-       /* while (phaseClock.getElapsedTime().asMilliseconds() <= RECV_PHASE_TIMEOUT) {
+        while (phaseClock.getElapsedTime().asMilliseconds() <= RECV_PHASE_TIMEOUT) {
             for (size_t i = 0; i < playersCount; ++i) {
                 sf::Packet packet;
                 if (playersInfo[i].messages.size() >= RECV_MSG_HARD_LIMIT) {
                     continue;
                 }
-                if (playersInfo[i].udpSocket.receive(
-                        packet, playersInfo[i].ipAddress, playersInfo[i].udpPort) == sf::Socket::Done) {
+                if (playersInfo[i].receiveFromUdp(packet) == sf::Socket::Done) {
                     playersInfo[i].messages.push(packet);
                 }
             }
-        }*/
+        }
         //game update stage.
         for (size_t i = 0; i < plants.size(); ++i) {
             if (plants[i].deadlinePassed()) {
