@@ -263,3 +263,6 @@ __pycache__/
 # Linux binaries
 SFMLServer/server
 SFMLClient/client
+
+# clang format
+.clang-format

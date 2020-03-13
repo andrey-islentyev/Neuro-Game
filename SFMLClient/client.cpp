@@ -92,6 +92,7 @@ int main() {
 		window.clear();
 		sf::Packet* pac = new sf::Packet();
 		while (udpSocket.receive(*pac, ip, serverPort) == sf::Socket::Done) {
+			std::cout << "received\n";
 			sf::Uint8 type, species;
 			sf::Int8 fruit;
 			sf::Uint64 id;
