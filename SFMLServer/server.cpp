@@ -28,23 +28,22 @@ enum RequestToClientType {
 
 struct PlayerInfo {
     sf::TcpSocket authSocket;
-    sf::UdpSocket udpSocket;
-    sf::Uint16 udpPort;
+    sf::UdpSocket sendSocket, recvSocket;
+	sf::Uint16 sendPort, recvPort;
     std::string nickname;
     sf::IpAddress ipAddress;
     std::queue<sf::Packet> messages;
     sf::Socket::Status sendToUdp(sf::Packet &packet) {
-        sf::Socket::Status status = udpSocket.send(packet, ipAddress, udpPort);
+        sf::Socket::Status status = sendSocket.send(packet, ipAddress, sendPort);
 		return status;
     }
     sf::Socket::Status receiveFromUdp(sf::Packet &packet) {
-        return udpSocket.receive(packet, ipAddress, udpPort);
+        return recvSocket.receive(packet, ipAddress, recvPort);
     }
 };
 
 struct Plant {
-    double x;
-    double y;
+    double x, y;
     sf::Int8 state;
     sf::Uint8 type;
     sf::Uint64 id;
@@ -85,6 +84,7 @@ struct Plant {
 			sf::Socket::Status status;
             if((status = info.sendToUdp(packet)) != sf::Socket::Done){
 				std::cout << "Error. Can't send packet with plant update " << status << "\n";
+				pause();
 				exit(EXIT_FAILURE);
 			}
         }
@@ -106,7 +106,7 @@ void giveIpHint() {
 int main() {
     std::default_random_engine engine;
     Plant::engine = &engine;
-    Plant::timeDistribution = std::uniform_real_distribution<float>(1.0, 2.0);
+    Plant::timeDistribution = std::uniform_real_distribution<float>(20.0, 50.0);
     giveIpHint();
     uint16_t port;
     std::cin >> port;
@@ -152,14 +152,21 @@ int main() {
     }
     std::cout << "Game started\n";
     for (size_t i = 0; i < playersCount; ++i) {
-        if (playersInfo[i].udpSocket.bind(0) != sf::Socket::Done) {
+        if (playersInfo[i].sendSocket.bind(0) != sf::Socket::Done) {
             std::cout << "Can't open udp socket\n";
             pause();
             return EXIT_FAILURE;
         }
-        sf::Uint16 port = playersInfo[i].udpSocket.getLocalPort();
+		if (playersInfo[i].recvSocket.bind(0) != sf::Socket::Done) {
+			std::cout << "Can't open udp socket\n";
+			pause();
+			return EXIT_FAILURE;
+		}
+        sf::Uint16 sendPort = playersInfo[i].sendSocket.getLocalPort();
+		sf::Uint16 recvPort = playersInfo[i].recvSocket.getLocalPort();
         sf::Packet packet;
-        packet << port;
+		packet << sendPort;
+        packet << recvPort;
         if (playersInfo[i].authSocket.send(packet) != sf::Socket::Done) {
             std::cout << "Can't send server UDP port data\n";
             pause();
@@ -173,9 +180,11 @@ int main() {
             pause();
             return EXIT_FAILURE;
         }
-        packet >> playersInfo[i].udpPort;
+        packet >> playersInfo[i].sendPort;
+		packet >> playersInfo[i].recvPort;
         packet >> playersInfo[i].nickname;
-        playersInfo[i].udpSocket.setBlocking(false);
+        playersInfo[i].recvSocket.setBlocking(false);
+		playersInfo[i].sendSocket.setBlocking(false);
     }
     for (size_t i = 0; i < playersCount; ++i) {
         std::cout << "#" << i << " nickname: " << playersInfo[i].nickname << "\n";
@@ -195,7 +204,7 @@ int main() {
         plants[i].y = yDistribution(engine);
         plants[i].type = typeDistribution(engine);
         plants[i].id = i;
-        plants[i].state = 0;
+        plants[i].state = 2;
         plants[i].generateNewDeadline();
         plants[i].notify(playersInfo, playersCount);
     }
@@ -203,7 +212,7 @@ int main() {
     while (true) {
         phaseClock.restart();
         //recieve packets stage
-        while (phaseClock.getElapsedTime().asMilliseconds() <= RECV_PHASE_TIMEOUT) {
+       /* while (phaseClock.getElapsedTime().asMilliseconds() <= RECV_PHASE_TIMEOUT) {
             for (size_t i = 0; i < playersCount; ++i) {
                 sf::Packet packet;
                 if (playersInfo[i].messages.size() >= RECV_MSG_HARD_LIMIT) {
@@ -214,7 +223,7 @@ int main() {
                     playersInfo[i].messages.push(packet);
                 }
             }
-        }
+        }*/
         //game update stage.
         for (size_t i = 0; i < plants.size(); ++i) {
             if (plants[i].deadlinePassed()) {

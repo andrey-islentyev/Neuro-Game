@@ -29,10 +29,11 @@ int main() {
 	sf::Texture texture;
 	sf::Color revealed;
 	sf::Color unrevealed;
-	sf::UdpSocket udpSocket;
+	sf::UdpSocket sendSocket;
+	sf::UdpSocket recvSocket;
 	sf::Packet packet;
-	sf::Uint16 serverPort;
-	sf::Uint16 clientPort;
+	sf::Uint16 serverRecvPort, serverSendPort;
+	sf::Uint16 clientRecvPort, clientSendPort;
 	setlocale(LC_ALL, "Russian");
 	std::cout << "Nickname: ";
 	std::string nickname;
@@ -55,18 +56,28 @@ int main() {
 		pause();
 		return EXIT_FAILURE;
 	}
-	if (packet.getDataSize() != 2) {
+	if (packet.getDataSize() != 4) {
 		std::cout << "Incorrect UDP port packet\n";
 		pause();
 		return EXIT_FAILURE;
 	}
-	packet >> serverPort;
-	std::cout << serverPort << std::endl;
-	udpSocket.bind(0);
-	clientPort = udpSocket.getLocalPort();
+	packet >> serverRecvPort >> serverSendPort;
+	std::cout << serverRecvPort << std::endl;
+	if (sendSocket.bind(0) != sf::Socket::Done) {
+		std::cout << "Can't bind UDP socket\n";
+		pause();
+		return EXIT_FAILURE;
+	}
+	if (recvSocket.bind(0) != sf::Socket::Done) {
+		std::cout << "Can't bind UDP socket\n";
+		pause();
+		return EXIT_FAILURE;
+	}
+	clientRecvPort = recvSocket.getLocalPort();
+	clientSendPort = sendSocket.getLocalPort();
 	packet = sf::Packet();
-	packet << clientPort;
-	packet << nickname;
+	packet << clientRecvPort;
+	packet << clientSendPort;
 	socket.send(packet);
 	sf::RenderWindow window(sf::VideoMode(width, height), L"Client");
 	window.setVerticalSyncEnabled(true);
@@ -82,7 +93,7 @@ int main() {
 			textures[i][j].setScale(sf::Vector2f(2, 2));
 		}
 	}
-	udpSocket.setBlocking(false);
+	recvSocket.setBlocking(false);
 	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event)) {
@@ -91,7 +102,7 @@ int main() {
 		}
 		window.clear();
 		sf::Packet* pac = new sf::Packet();
-		while (udpSocket.receive(*pac, ip, serverPort) == sf::Socket::Done) {
+		while (recvSocket.receive(*pac, ip, clientRecvPort) == sf::Socket::Done) {
 			std::cout << "received\n";
 			sf::Uint8 type, species;
 			sf::Int8 fruit;
